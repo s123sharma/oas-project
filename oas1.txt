@@ -1,0 +1,87 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define MAX_PROCESSES 100
+#define MAX_PRIORITY 10
+#define MAX_CPU_BURST 20
+
+typedef struct process {
+    int pid;
+    int arrival_time;
+    int priority;
+    int cpu_burst;
+    int waiting_time;
+    int turnaround_time;
+} process;
+
+process processes[MAX_PROCESSES];
+int num_processes = 0;
+
+void generate_processes() {
+    srand(time(NULL));
+    for (int i = 0; i < MAX_PROCESSES; i++) {
+        int arrival_time = rand() % 100;
+        int priority = rand() % MAX_PRIORITY;
+        int cpu_burst = rand() % MAX_CPU_BURST + 1;
+        process p = {i, arrival_time, priority, cpu_burst, 0, 0};
+        processes[num_processes++] = p;
+    }
+}
+
+void run_priority_algorithm() {
+    int current_time = 0;
+    int num_completed = 0;
+    while (num_completed < num_processes && current_time < 100) {
+        int highest_priority = -1;
+        int index = -1;
+        for (int i = 0; i < num_processes; i++) {
+            if (processes[i].arrival_time <= current_time && processes[i].priority > highest_priority && processes[i].cpu_burst > 0) {
+                highest_priority = processes[i].priority;
+                index = i;
+            }
+        }
+        if (index == -1) {
+            current_time++;
+        } else {
+            processes[index].cpu_burst--;
+            if (processes[index].cpu_burst == 0) {
+                num_completed++;
+                processes[index].turnaround_time = current_time + 1 - processes[index].arrival_time;
+            }
+            for (int i = 0; i < num_processes; i++) {
+                if (i != index && processes[i].arrival_time <= current_time && processes[i].cpu_burst > 0) {
+                    processes[i].waiting_time++;
+                }
+            }
+            current_time++;
+        }
+    }
+}
+
+
+
+void print_results() {
+    float avg_waiting_time = 0.0;
+    float avg_turnaround_time = 0.0;
+    for (int i = 0; i < num_processes; i++) {
+        avg_waiting_time += processes[i].waiting_time;
+        avg_turnaround_time += processes[i].turnaround_time;
+        printf("Process %d: Arrival Time = %d, Priority = %d, CPU Burst = %d, Waiting Time = %d, Turnaround Time = %d\n",
+               processes[i].pid, processes[i].arrival_time, processes[i].priority, processes[i].cpu_burst,
+               processes[i].waiting_time, processes[i].turnaround_time);
+    }
+    avg_waiting_time /= num_processes;
+    avg_turnaround_time /= num_processes;
+    printf("Average Waiting Time: %.2f\n", avg_waiting_time);
+    printf("Average Turnaround Time: %.2f\n", avg_turnaround_time);
+}
+
+int main() {
+    generate_processes();
+    run_priority_algorithm();
+    print_results();
+    return 0;
+}
+
